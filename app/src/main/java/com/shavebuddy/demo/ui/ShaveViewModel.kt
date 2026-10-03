@@ -59,6 +59,8 @@ class ShaveViewModel(private val repository: ShaveRepository) : ViewModel() {
     fun setup(name: String, installedOn: LocalDate, uses: Int?, days: Int?, interval: Int) =
         mutate { repository.setup(name, installedOn, uses, days, interval) }
     fun record(date: LocalDate) = mutate { repository.addEvent(date) }
+    fun backfill(date: LocalDate, adjustFirstInstallation: Boolean) =
+        mutate { repository.addEvent(date, adjustFirstInstallation) }
     fun delete(id: String) = mutate { repository.deleteEvent(id) }
     fun replace() = mutate { repository.replaceBlade() }
     fun updateSettings(name: String, uses: Int?, days: Int?, interval: Int, onSuccess: () -> Unit) =

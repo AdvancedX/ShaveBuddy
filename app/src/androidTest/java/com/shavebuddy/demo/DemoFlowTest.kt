@@ -11,6 +11,10 @@ import androidx.test.core.app.ApplicationProvider
 import com.shavebuddy.demo.data.ShaveDatabase
 import com.shavebuddy.demo.data.ShaveRepository
 import com.shavebuddy.demo.ui.*
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -20,12 +24,13 @@ class DemoFlowTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private lateinit var database: ShaveDatabase
     private lateinit var databaseName: String
+    private lateinit var repository: ShaveRepository
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Before fun isolatedDatabase() {
         databaseName = "ui-${System.nanoTime()}.db"
         database = ShaveDatabase.open(context, databaseName)
-        val repository = ShaveRepository(database)
+        repository = ShaveRepository(database)
         compose.setContent {
             val model: ShaveViewModel = viewModel(factory = object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
@@ -83,5 +88,38 @@ class DemoFlowTest {
         compose.onNodeWithText("0 次").assertExists()
         compose.onNodeWithText("记录剃须").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("今天已记录 1 次").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test fun backfillBeforeDefaultInstallationCanSelectDateAndRequiresConfirmation() {
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("开始记录").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("开始记录").performScrollTo().performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("补记其他日期").fetchSemanticsNodes().isNotEmpty() }
+        val today = LocalDate.now()
+        val previous = today.withDayOfMonth(1)
+        // Pick the first of the displayed month (yesterday if today is the first).
+        val date = if (previous == today) today.minusDays(1) else previous
+        val label = date.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", context.resources.configuration.locales[0]))
+        fun selectPastDate() {
+            compose.onNodeWithText("补记其他日期").performScrollTo().performClick()
+            if (date.month != today.month) compose.onNodeWithContentDescription("Change to previous month").performClick()
+            compose.onNode(hasText(label, substring = true) or hasContentDescription(label, substring = true)).assertIsEnabled().performClick()
+            compose.onNodeWithText("选择日期").performClick()
+        }
+        selectPastDate()
+        compose.onNodeWithText("调整安装日期并补记？").assertExists()
+        compose.onNodeWithText("取消").performClick()
+        runBlocking {
+            assertTrue(repository.read().events.isEmpty())
+            assertEquals(today, repository.read().cycles.single().installedOn)
+        }
+        selectPastDate()
+        compose.onNodeWithText("调整并补记").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("1 次").fetchSemanticsNodes().isNotEmpty() }
+        runBlocking {
+            val data = repository.read()
+            assertEquals(date, data.events.single().localDate)
+            assertEquals(date, data.cycles.single().installedOn)
+            assertEquals(data.cycles.single().id, data.events.single().cycleId)
+        }
     }
 }

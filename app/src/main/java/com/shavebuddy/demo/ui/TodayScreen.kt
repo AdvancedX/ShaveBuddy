@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -14,9 +15,11 @@ import com.shavebuddy.demo.domain.*
 import java.time.LocalDate
 
 @Composable
-fun TodayScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onRecord: (LocalDate) -> Unit) {
+fun TodayScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onRecord: (LocalDate) -> Unit, onBackfill: (LocalDate, Boolean) -> Unit) {
     val summary = ShaveRules.summarize(snapshot, today)
     var backfill by remember { mutableStateOf(false) }
+    var pendingBackfill by rememberSaveable { mutableStateOf<String?>(null) }
+    val firstInstallation = snapshot.cycles.minOfOrNull { it.installedOn }
     PageColumn {
         Text(formatDate(today), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         SectionTitle(stringResource(R.string.today_title), stringResource(R.string.blade_intro))
@@ -55,7 +58,19 @@ fun TodayScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onReco
             OutlinedButton(onClick = { backfill = true }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.backfill)) }
         }
     }
-    if (backfill) ChooseDate(today, snapshot.cycles.minOfOrNull { it.installedOn }, today, { backfill = false }, onRecord)
+    if (backfill) ChooseDate(today, null, today, { backfill = false }) { date ->
+        if (firstInstallation != null && date.isBefore(firstInstallation)) pendingBackfill = date.toString()
+        else onBackfill(date, false)
+    }
+    pendingBackfill?.let { value ->
+        ConfirmDialog(
+            stringResource(R.string.early_backfill_title),
+            stringResource(R.string.early_backfill_body, firstInstallation.toString(), value),
+            stringResource(R.string.confirm_early_backfill),
+            { pendingBackfill = null },
+            { onBackfill(LocalDate.parse(value), true) },
+        )
+    }
 }
 
 @Composable

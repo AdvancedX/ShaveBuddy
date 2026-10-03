@@ -32,8 +32,14 @@ class ShaveRepository(private val database: ShaveDatabase, private val fixedCloc
         dao.insertCycle(CycleEntity(UUID.randomUUID().toString(), installedOn.toString(), targetUses = uses, targetDays = days, createdAt = clock.millis()))
     }
 
-    suspend fun addEvent(date: LocalDate) = database.withTransaction {
+    suspend fun addEvent(date: LocalDate, adjustFirstInstallation: Boolean = false) = database.withTransaction {
         require(!date.isAfter(LocalDate.now(clock)))
+        if (adjustFirstInstallation) {
+            val first = requireNotNull(dao.cycles().minWithOrNull(compareBy<CycleEntity> { it.installedOn }.thenBy { it.createdAt }))
+            if (date.isBefore(LocalDate.parse(first.installedOn))) {
+                dao.updateCycle(first.copy(installedOn = date.toString()))
+            }
+        }
         val cycle = requireNotNull(ShaveRules.cycleForDate(read().cycles, date))
         val instant = date.atTime(LocalTime.now(clock)).atZone(clock.zone).toInstant()
         dao.insertEvent(EventEntity(UUID.randomUUID().toString(), cycle.id, date.toString(), instant.toEpochMilli(), clock.zone.id))

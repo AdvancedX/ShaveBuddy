@@ -7,6 +7,7 @@
 - 首次设置一把手动剃须刀与刀片安装日期；
 - 可编辑的使用次数、天数目标与剃须间隔，目标留空可关闭；
 - 一键记录今天，也可补记历史日期，同日支持多次；
+- 补记可选择过去日期；早于首次安装日期时，确认调整首次安装日期后保存；
 - 查看当前刀片使用次数、自然日天数、上次与下次大约日期；
 - 月历、日期记录详情及确认删除；
 - 确认更换刀片，结束旧周期并保留历史；
@@ -26,13 +27,18 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.shavebuddy.demo/.MainActivity
 ```
 
-连接模拟器或已授权设备后运行设备测试：
+连接模拟器或已授权设备后，覆盖安装并直接运行设备测试（保留试用记录）：
 
 ```sh
-./gradlew connectedDebugAndroidTest
+./gradlew assembleDebug assembleDebugAndroidTest
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.AndroidJUnitRunner
 ```
 
 安装包：`app/build/outputs/apk/debug/app-debug.apk`。应用 ID `com.shavebuddy.demo` 仅用于 Demo 本地测试；正式发布前需要确定发布者命名空间和签名。
+
+`./gradlew connectedDebugAndroidTest` 适合专用测试设备；该任务会装卸应用，完成后需要重新安装 Demo。测试本身使用独立数据库。
 
 ## 文档
 

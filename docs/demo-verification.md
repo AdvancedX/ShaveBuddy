@@ -68,3 +68,22 @@ git diff --check
 - 本文与更新后的 README/技术方案/路线图作为最后一个文档提交；完整历史可用 `git log --oneline` 查看。
 
 开发分支：`feat/manual-razor-demo`。保留开发前已有的 `docs/pre-development-blockers.md`、`.DS_Store` 与 `package-lock.json` 修改，未将它们混入 Demo 提交。
+
+## 2026-10-03 补记日期修复
+
+复现：默认安装日期为今天，TodayScreen 将其作为补记日历的最早可选日，导致过去日期全部禁用。新增 UI 回归测试在旧版对过去日期的 `assertIsEnabled` 断言失败。
+
+修复：补记日期选择器允许过去日期，仍禁用未来日期。若早于首次安装日，明确展示日期调整确认；确认后将首次刀片安装日向前调整并补记，取消不变更数据。日期调整与插入在同一 Room 事务内完成，旧记录归属不变，不需要数据库升级。
+
+验证命令：
+
+```sh
+./gradlew testDebugUnitTest assembleDebug assembleDebugAndroidTest lintDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+结果：8 个单元测试、8 个设备测试（3 个 UI / 5 个 Room）通过；构建通过，Lint 无错误。新增覆盖日期可选择、取消与确认、关联首次历史周期、保留既有记录、未来日期拒绝和真实插入失败后的日期回滚。独立审查无 Critical/Important 问题。
+
+本次直接执行 instrumentation，避免 Gradle 设备测试任务的卸载清理影响试用数据；修复版使用覆盖安装。

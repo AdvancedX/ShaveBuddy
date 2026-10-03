@@ -101,4 +101,41 @@ class RepositoryTest {
             context.deleteDatabase(name)
         }
     }
+
+    @Test fun confirmedEarlyBackfillUsesFirstCycleAndPreservesExistingHistory() = runBlocking {
+        val name = "early-${System.nanoTime()}.db"
+        val db = ShaveDatabase.open(context, name)
+        try {
+            val repository = ShaveRepository(db, clock)
+            repository.setup("手动剃须刀", today, 10, 30, 2)
+            repository.addEvent(today)
+            val original = repository.read()
+            repository.replaceBlade()
+            repository.addEvent(today.minusDays(2), adjustFirstInstallation = true)
+            val data = repository.read()
+            assertEquals(today.minusDays(2), data.cycles.first { it.id == original.cycles.single().id }.installedOn)
+            assertEquals(today, data.cycles.first { it.retiredOn == null }.installedOn)
+            assertEquals(original.cycles.single().id, data.events.first { it.localDate == today.minusDays(2) }.cycleId)
+            assertEquals(original.events.single(), data.events.first { it.id == original.events.single().id })
+            assertEquals(0, ShaveRules.summarize(data, today).uses)
+            try { repository.addEvent(today.plusDays(1), adjustFirstInstallation = true); fail("future date accepted") }
+            catch (_: IllegalArgumentException) { }
+            assertEquals(data, repository.read())
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
+
+    @Test fun failedEarlyBackfillRollsBackInstallationAdjustment() = runBlocking {
+        val name = "early-rollback-${System.nanoTime()}.db"
+        val db = ShaveDatabase.open(context, name)
+        try {
+            val repository = ShaveRepository(db, clock)
+            repository.setup("手动剃须刀", today, 10, 30, 2)
+            db.openHelper.writableDatabase.execSQL("CREATE TRIGGER reject_event BEFORE INSERT ON events BEGIN SELECT RAISE(ABORT, 'test write failure'); END")
+            try { repository.addEvent(today.minusDays(2), adjustFirstInstallation = true); fail("write should fail") }
+            catch (_: android.database.sqlite.SQLiteException) { }
+            val data = repository.read()
+            assertEquals(today, data.cycles.single().installedOn)
+            assertTrue(data.events.isEmpty())
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
 }

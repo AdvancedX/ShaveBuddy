@@ -42,6 +42,9 @@
     <string name="after_first_record">第一次记录后推算</string>
     <string name="record_shave">记录剃须</string>
     <string name="backfill">补记其他日期</string>
+    <string name="early_backfill_title">调整安装日期并补记？</string>
+    <string name="early_backfill_body">所选日期早于首次刀片安装日期。将首次安装日期从 %1$s 调整为 %2$s，并把补记关联到首次刀片。已安装天数会重新计算，现有记录归属保持不变。</string>
+    <string name="confirm_early_backfill">调整并补记</string>
     <string name="recorded_today">今天已记录 %1$d 次</string>
     <string name="record_today_hint">剃须后轻点一次，就能留下今天的记录。</string>
     <string name="multiple_records_hint">同一天可以记录多次，每次点击都会新增一条。</string>

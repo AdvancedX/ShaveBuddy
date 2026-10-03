@@ -61,7 +61,7 @@ fun ShaveApp(model: ShaveViewModel) {
                     }
                 }
                 snapshot.equipment == null -> SetupScreen(state.today, state.busy, model::setup)
-                tab == 0 -> TodayScreen(snapshot, state.today, state.busy, model::record)
+                tab == 0 -> TodayScreen(snapshot, state.today, state.busy, model::record, model::backfill)
                 tab == 1 -> CalendarScreen(snapshot, state.today, state.busy, model::record, model::delete)
                 else -> GearScreen(snapshot, state.today, state.busy, model::replace, model::updateSettings)
             }
