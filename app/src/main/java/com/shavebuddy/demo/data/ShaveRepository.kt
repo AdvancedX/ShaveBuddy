@@ -9,7 +9,8 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class ShaveRepository(private val database: ShaveDatabase, private val clock: Clock = Clock.systemDefaultZone()) {
+class ShaveRepository(private val database: ShaveDatabase, private val fixedClock: Clock? = null) {
+    private val clock: Clock get() = fixedClock ?: Clock.systemDefaultZone()
     private val dao = database.dao()
 
     val snapshots: Flow<ShaveSnapshot> = database.invalidationTracker

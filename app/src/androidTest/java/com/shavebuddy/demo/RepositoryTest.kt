@@ -75,4 +75,30 @@ class RepositoryTest {
             context.deleteDatabase(name)
         }
     }
+
+    @Test fun settingsAndSameDayReplacementsKeepExactlyOneCurrentCycle() = runBlocking {
+        val name = "settings-${System.nanoTime()}.db"
+        val db = ShaveDatabase.open(context, name)
+        try {
+            val repository = ShaveRepository(db, clock)
+            repository.setup("手动剃须刀", today, 10, null, 2)
+            repository.addEvent(today)
+            repository.updateSettings("旅行剃须刀", 1, null, 3)
+            val updated = repository.read()
+            assertEquals("旅行剃须刀", updated.equipment?.name)
+            assertTrue(ShaveRules.summarize(updated, today).replacementSuggested)
+            assertEquals(today.plusDays(3), ShaveRules.summarize(updated, today).nextDate)
+            repository.replaceBlade()
+            repository.replaceBlade()
+            repository.addEvent(today)
+            val data = repository.read()
+            assertEquals(1, data.cycles.count { it.retiredOn == null })
+            assertEquals(3, data.cycles.size)
+            assertEquals(1, ShaveRules.summarize(data, today).uses)
+            assertEquals(updated.events.first().cycleId, data.events.first { it.id == updated.events.first().id }.cycleId)
+        } finally {
+            db.close()
+            context.deleteDatabase(name)
+        }
+    }
 }
