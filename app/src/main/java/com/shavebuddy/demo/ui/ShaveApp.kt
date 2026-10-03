@@ -35,8 +35,12 @@ fun ShaveApp(model: ShaveViewModel) {
     Scaffold(containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (snapshot?.equipment != null) NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                listOf(R.string.today to Icons.Outlined.Today, R.string.calendar to Icons.Outlined.CalendarMonth, R.string.gear to Icons.Outlined.Tune).forEachIndexed { index, (label, icon) ->
-                    NavigationBarItem(selected = tab == index, onClick = { tab = index }, icon = { Icon(icon, null) }, label = { Text(stringResource(label)) })
+                listOf(
+                    Triple(1, R.string.calendar, Icons.Outlined.CalendarMonth),
+                    Triple(0, R.string.today, Icons.Outlined.Today),
+                    Triple(2, R.string.gear, Icons.Outlined.Tune),
+                ).forEach { (destination, label, icon) ->
+                    NavigationBarItem(selected = tab == destination, onClick = { tab = destination }, icon = { Icon(icon, null) }, label = { Text(stringResource(label)) })
                 }
             }
         },

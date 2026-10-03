@@ -87,3 +87,9 @@ adb shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.Andr
 结果：8 个单元测试、8 个设备测试（3 个 UI / 5 个 Room）通过；构建通过，Lint 无错误。新增覆盖日期可选择、取消与确认、关联首次历史周期、保留既有记录、未来日期拒绝和真实插入失败后的日期回滚。独立审查无 Critical/Important 问题。
 
 本次直接执行 instrumentation，避免 Gradle 设备测试任务的卸载清理影响试用数据；修复版使用覆盖安装。
+
+## 2026-10-03 菜单顺序与日历布局调整
+
+底部顺序改为“日历 / 今天 / 装备”，“今天”居中，默认页与系统返回行为保持一致。日期行和星期标题使用相同的 6dp 横向间距，日期行之间为 8dp 间距；日期格点击效果裁剪到各自圆角内。
+
+`./gradlew assembleDebug assembleDebugAndroidTest lintDebug` 成功，直接运行 `DemoFlowTest` 的 3 个 UI 流程全部通过。覆盖安装后检查实际截图：默认今天居中，左侧菜单进入日历，日期格之间已有清晰的横纵间隔，星期标题对齐，原有记录仍保留。

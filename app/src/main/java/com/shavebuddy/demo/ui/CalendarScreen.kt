@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -36,7 +37,7 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
     PageColumn {
         SectionTitle(stringResource(R.string.calendar_title), stringResource(R.string.calendar_subtitle))
         Card(shape = RoundedCornerShape(24.dp)) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { monthValue = month.minusMonths(1).toString() }) {
                         Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, stringResource(R.string.previous_month))
@@ -46,7 +47,7 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
                         Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, stringResource(R.string.next_month))
                     }
                 }
-                Row(Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     stringResource(R.string.weekdays).split(",").forEach { day ->
                         Box(Modifier.weight(1f).height(32.dp), contentAlignment = Alignment.Center) {
                             Text(day, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -56,7 +57,7 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
                 val offset = month.atDay(1).dayOfWeek.value - 1
                 val rows = (offset + month.lengthOfMonth() + 6) / 7
                 repeat(rows) { week ->
-                    Row(Modifier.fillMaxWidth()) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         repeat(7) { weekday ->
                             val number = week * 7 + weekday - offset + 1
                             if (number !in 1..month.lengthOfMonth()) Box(Modifier.weight(1f).heightIn(min = 48.dp))
@@ -66,7 +67,7 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
                                 val description = stringResource(R.string.day_accessibility, formatDate(date), counts[date] ?: 0)
                                 val bg = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
                                 val fg = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                                Column(Modifier.weight(1f).heightIn(min = 48.dp).background(bg, RoundedCornerShape(12.dp))
+                                Column(Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).background(bg)
                                     .clickable { selectedValue = date.toString() }.semantics { contentDescription = description }
                                     .padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(number.toString(), color = fg, style = MaterialTheme.typography.bodyMedium)
