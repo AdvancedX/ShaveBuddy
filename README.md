@@ -4,9 +4,9 @@
 
 ## 下载体验
 
-当前版本：[0.1.0-demo（预发布）](https://github.com/AdvancedX/ShaveBuddy/releases/tag/demo-release)，发布于 2026-10-03。
+当前版本：[0.1.1-demo（预发布）](https://github.com/AdvancedX/ShaveBuddy/releases/tag/v0.1.1-demo)。
 
-**[下载 Android APK：shavebuddy.apk](https://github.com/AdvancedX/ShaveBuddy/releases/download/demo-release/shavebuddy.apk)**
+**[下载 Android APK：shavebuddy-0.1.1-demo.apk](https://github.com/AdvancedX/ShaveBuddy/releases/download/v0.1.1-demo/shavebuddy-0.1.1-demo.apk)**
 
 需要 Android 8.0（API 26）或更高版本。用手机下载 APK 后打开安装；如果系统提示，允许当前浏览器或文件管理器安装此应用。这个安装包是供个人试用的 Debug 构建。
 
@@ -36,7 +36,7 @@ git clone --branch feat/manual-razor-demo https://github.com/AdvancedX/ShaveBudd
 cd ShaveBuddy
 ```
 
-[demo-release 标签](https://github.com/AdvancedX/ShaveBuddy/tree/demo-release)对应此次发布的源码。如需构建该版本，在仓库中执行 `git checkout demo-release`。
+[v0.1.1-demo 标签](https://github.com/AdvancedX/ShaveBuddy/tree/v0.1.1-demo)对应此次发布的源码。如需构建该版本，在仓库中执行 `git checkout v0.1.1-demo`。先前的 `demo-release` 标签保留 0.1.0-demo 版本。
 
 ## 运行与打包 APK
 
