@@ -35,7 +35,7 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
     val current = snapshot.cycles.firstOrNull { it.retiredOn == null }
     val canRecord = !selected.isAfter(today) && ShaveRules.cycleForDate(snapshot.cycles, selected) != null
     PageColumn {
-        SectionTitle(stringResource(R.string.calendar_title), stringResource(R.string.calendar_subtitle))
+        SectionTitle(stringResource(R.string.calendar_title))
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

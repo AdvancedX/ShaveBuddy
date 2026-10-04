@@ -17,8 +17,7 @@ import java.time.LocalDate
 fun SetupScreen(today: LocalDate, busy: Boolean, onSetup: (String, LocalDate, Int?, Int?, Int) -> Unit) {
     PageColumn {
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        SectionTitle(stringResource(R.string.welcome_title), stringResource(R.string.welcome_subtitle))
-        SuggestionChip(onClick = {}, label = { Text(stringResource(R.string.manual_only)) })
+        IllustratedHeader(stringResource(R.string.welcome_title))
         SettingsForm(today = today, busy = busy, onSave = onSetup)
         Text(stringResource(R.string.private_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }

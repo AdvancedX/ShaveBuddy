@@ -1,11 +1,14 @@
 package com.shavebuddy.demo.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.shavebuddy.demo.R
@@ -21,10 +24,15 @@ fun PageColumn(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-fun SectionTitle(title: String, subtitle: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineLarge)
-        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+fun SectionTitle(title: String) {
+    Text(title, style = MaterialTheme.typography.headlineLarge)
+}
+
+@Composable
+fun IllustratedHeader(title: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineLarge)
+        Image(painterResource(R.drawable.razor_illustration), contentDescription = null, modifier = Modifier.size(88.dp))
     }
 }
 

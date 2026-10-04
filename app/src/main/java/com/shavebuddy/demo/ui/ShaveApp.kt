@@ -2,15 +2,12 @@ package com.shavebuddy.demo.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Today
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -36,11 +33,11 @@ fun ShaveApp(model: ShaveViewModel) {
         bottomBar = {
             if (snapshot?.equipment != null) NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 listOf(
-                    Triple(1, R.string.calendar, Icons.Outlined.CalendarMonth),
-                    Triple(0, R.string.today, Icons.Outlined.Today),
-                    Triple(2, R.string.gear, Icons.Outlined.Tune),
+                    Triple(1, R.string.calendar, R.drawable.ic_nav_calendar),
+                    Triple(0, R.string.today, R.drawable.ic_nav_today),
+                    Triple(2, R.string.gear, R.drawable.ic_nav_gear),
                 ).forEach { (destination, label, icon) ->
-                    NavigationBarItem(selected = tab == destination, onClick = { tab = destination }, icon = { Icon(icon, null) }, label = { Text(stringResource(label)) })
+                    NavigationBarItem(selected = tab == destination, onClick = { tab = destination }, icon = { Icon(painterResource(icon), null) }, label = { Text(stringResource(label)) })
                 }
             }
         },

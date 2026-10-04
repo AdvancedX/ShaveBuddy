@@ -21,8 +21,7 @@ fun TodayScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onReco
     var pendingBackfill by rememberSaveable { mutableStateOf<String?>(null) }
     val firstInstallation = snapshot.cycles.minOfOrNull { it.installedOn }
     PageColumn {
-        Text(formatDate(today), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        SectionTitle(stringResource(R.string.today_title), stringResource(R.string.blade_intro))
+        IllustratedHeader(formatDate(today))
         Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
             Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(stringResource(R.string.current_blade), style = MaterialTheme.typography.labelLarge)
@@ -53,8 +52,7 @@ fun TodayScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onReco
                 Text(stringResource(if (busy) R.string.saving else R.string.record_shave), style = MaterialTheme.typography.titleMedium)
             }
             val count = snapshot.events.count { it.localDate == today }
-            Text(if (count > 0) stringResource(R.string.recorded_today, count) else stringResource(R.string.record_today_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (count > 0) Text(stringResource(R.string.multiple_records_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (count > 0) Text(stringResource(R.string.recorded_today, count), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedButton(onClick = { backfill = true }, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.backfill)) }
         }
     }
