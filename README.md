@@ -29,10 +29,10 @@
 
 ## 获取源码
 
-可运行的 Android Demo 在 **[feat/manual-razor-demo 分支](https://github.com/AdvancedX/ShaveBuddy/tree/feat/manual-razor-demo)**。默认 `main` 分支目前保留早期规划文档与此使用说明，尚未合入 Demo 源码。
+可运行的 Android Demo 已合入默认 **[main 分支](https://github.com/AdvancedX/ShaveBuddy/tree/main)**，包含应用源码、测试与开发文档。
 
 ```sh
-git clone --branch feat/manual-razor-demo https://github.com/AdvancedX/ShaveBuddy.git
+git clone --branch main https://github.com/AdvancedX/ShaveBuddy.git
 cd ShaveBuddy
 ```
 
@@ -78,14 +78,14 @@ adb shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.Andr
 
 ## 文档
 
-以下链接指向 Demo 分支的文档：
+以下链接指向 main 分支的文档：
 
-- [产品基调与长期 MVP](https://github.com/AdvancedX/ShaveBuddy/blob/feat/manual-razor-demo/docs/product-brief.md)
-- [当前技术方案与 ADR](https://github.com/AdvancedX/ShaveBuddy/blob/feat/manual-razor-demo/docs/technical-direction.md)
-- [交付路线图](https://github.com/AdvancedX/ShaveBuddy/blob/feat/manual-razor-demo/docs/delivery-roadmap.md)
-- [Demo 范围](https://github.com/AdvancedX/ShaveBuddy/blob/feat/manual-razor-demo/docs/superpowers/specs/2026-10-03-manual-razor-demo-design.md)
-- [实现计划](https://github.com/AdvancedX/ShaveBuddy/blob/feat/manual-razor-demo/docs/superpowers/plans/2026-10-03-manual-razor-demo.md)
-- [验证记录](https://github.com/AdvancedX/ShaveBuddy/blob/feat/manual-razor-demo/docs/demo-verification.md)
-- [原始开工清单](https://github.com/AdvancedX/ShaveBuddy/blob/feat/manual-razor-demo/docs/pre-development-blockers.md)
+- [产品基调与长期 MVP](https://github.com/AdvancedX/ShaveBuddy/blob/main/docs/product-brief.md)
+- [当前技术方案与 ADR](https://github.com/AdvancedX/ShaveBuddy/blob/main/docs/technical-direction.md)
+- [交付路线图](https://github.com/AdvancedX/ShaveBuddy/blob/main/docs/delivery-roadmap.md)
+- [Demo 范围](https://github.com/AdvancedX/ShaveBuddy/blob/main/docs/superpowers/specs/2026-10-03-manual-razor-demo-design.md)
+- [实现计划](https://github.com/AdvancedX/ShaveBuddy/blob/main/docs/superpowers/plans/2026-10-03-manual-razor-demo.md)
+- [验证记录](https://github.com/AdvancedX/ShaveBuddy/blob/main/docs/demo-verification.md)
+- [原始开工清单](https://github.com/AdvancedX/ShaveBuddy/blob/main/docs/pre-development-blockers.md)
 
 Demo 已用于试用，完整 MVP 与阶段 0 验收仍未完成；开工清单中的真机、通知等事项继续保留。
