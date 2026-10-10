@@ -24,7 +24,7 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onRecord: (LocalDate) -> Unit, onDelete: (String) -> Unit) {
+fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onRecord: (LocalDate) -> Unit, onDelete: (String) -> Unit, onSettings: () -> Unit = {}) {
     var selectedValue by rememberSaveable { mutableStateOf(today.toString()) }
     var monthValue by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
@@ -35,7 +35,7 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
     val current = snapshot.cycles.firstOrNull { it.retiredOn == null }
     val canRecord = !selected.isAfter(today) && ShaveRules.cycleForDate(snapshot.cycles, selected) != null
     PageColumn {
-        SectionTitle(stringResource(R.string.calendar_title))
+        SectionTitle(stringResource(R.string.calendar_title), onSettings)
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
