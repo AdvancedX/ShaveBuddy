@@ -93,3 +93,27 @@ adb shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.Andr
 底部顺序改为“日历 / 今天 / 装备”，“今天”居中，默认页与系统返回行为保持一致。日期行和星期标题使用相同的 6dp 横向间距，日期行之间为 8dp 间距；日期格点击效果裁剪到各自圆角内。
 
 `./gradlew assembleDebug assembleDebugAndroidTest lintDebug` 成功，直接运行 `DemoFlowTest` 的 3 个 UI 流程全部通过。覆盖安装后检查实际截图：默认今天居中，左侧菜单进入日历，日期格之间已有清晰的横纵间隔，星期标题对齐，原有记录仍保留。
+
+## 2026-10-10 剃须满意度
+
+记录成功后展示四项独立可选评分：总体、剃净度、顺滑度、皮肤状况。三档按“不满意 / 一般 / 满意”排列；默认未评分，可重复点击取消、逐项跳过、全部跳过或返回关闭。剃须先保存，评分单独按事件 ID 更新，失败重试不重复记录。日历日期格显示当天最近一次已填写的总体评分，选择日期可查看每条记录的四项评分。
+
+Room 升级至 v2，Migration 仅新增四个可空评分列。设备测试用导出的 v1 schema 和实际旧数据建库，验证升级保留装备、周期、事件 ID、时间与使用次数，旧评分均为 NULL；另验证部分评分在更换刀片及数据库关闭重开后保持归属，删除后不存在的记录不能被评分。
+
+验证命令：
+
+```sh
+ANDROID_HOME=/Users/zheruixu/Library/Android/sdk ./gradlew testDebugUnitTest assembleDebug assembleDebugAndroidTest lintDebug
+adb -s emulator-5556 install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5556 install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb -s emulator-5556 shell am instrument -w -r -e class com.shavebuddy.demo.DemoFlowTest,com.shavebuddy.demo.RepositoryTest com.shavebuddy.demo.test/androidx.test.runner.AndroidJUnitRunner
+git diff --check
+```
+
+结果：8 个单元测试、12 个设备测试（5 个 UI / 7 个 Room）全部通过，构建成功，Lint 无错误，14 项 warning 为依赖更新、已有 launcher icon 和 SDK 检查提示。本次使用独立临时 API 37 模拟器与独立数据库，避免共享模拟器被另一组测试替换应用造成干扰。
+
+新增 UI 测试验证部分评分、默认未评分、逐项跳过、重复点击取消、返回关闭、同日最新评分、后续未评分不覆盖已有评分、补记后评分、真实 SQL 更新失败后重试不重复、失败后跳过不显示通用错误提示。两个旧 UI 断言改用当前字符串资源，修正之前残留的旧文案。
+
+评分面板测试先因缺少面板失败，迁移测试先因数据库版本仍为 1 失败；失败后跳过的回归先复现通用错误提示残留，修复后通过。独立代码审查和修正复查无剩余 Critical/Important 问题。
+
+已查看真实模拟器截图，评分面板四项与按钮均完整显示，日历格表情与详情评分正确。截图保存在构建产物 `app/build/verification/`，不入 Git。尚未验证真机、API 26、横屏大字体和评分草稿的进程恢复；进程退出后未保存评分不恢复，已保存剃须记录仍保留。

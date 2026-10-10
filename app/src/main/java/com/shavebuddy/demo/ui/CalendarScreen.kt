@@ -31,6 +31,8 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
     val selected = LocalDate.parse(selectedValue)
     val month = YearMonth.parse(monthValue)
     val counts = snapshot.events.groupingBy { it.localDate }.eachCount()
+    val dailyRatings = snapshot.events.filter { it.ratings.overall != null }.groupBy { it.localDate }
+        .mapValues { (_, entries) -> entries.maxWith(compareBy<ShaveEvent> { it.occurredAt }.thenBy { it.id }).ratings.overall!! }
     val events = snapshot.events.filter { it.localDate == selected }.sortedByDescending { it.occurredAt }
     val current = snapshot.cycles.firstOrNull { it.retiredOn == null }
     val canRecord = !selected.isAfter(today) && ShaveRules.cycleForDate(snapshot.cycles, selected) != null
@@ -64,14 +66,21 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
                             else {
                                 val date = month.atDay(number)
                                 val isSelected = date == selected
-                                val description = stringResource(R.string.day_accessibility, formatDate(date), counts[date] ?: 0)
+                                val rating = dailyRatings[date]
+                                val dayDescription = stringResource(R.string.day_accessibility, formatDate(date), counts[date] ?: 0)
+                                val description = if (counts.containsKey(date)) stringResource(R.string.day_rating_accessibility,
+                                    dayDescription, satisfactionLabel(rating)) else dayDescription
                                 val bg = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
                                 val fg = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                                 Column(Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).background(bg)
                                     .clickable { selectedValue = date.toString() }.semantics { contentDescription = description }
                                     .padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(number.toString(), color = fg, style = MaterialTheme.typography.bodyMedium)
-                                    Box(Modifier.size(4.dp).background(if (counts.containsKey(date)) fg else bg, CircleShape))
+                                    if (rating != null) {
+                                        CompositionLocalProvider(LocalContentColor provides fg) { SatisfactionIcon(rating, size = 18.dp) }
+                                    } else Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+                                        Box(Modifier.size(4.dp).background(if (counts.containsKey(date)) fg else bg, CircleShape))
+                                    }
                                 }
                             }
                         }
@@ -89,6 +98,7 @@ fun CalendarScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onR
                         val time = Instant.ofEpochMilli(event.occurredAt).atZone(ZoneId.of(event.timeZone)).format(DateTimeFormatter.ofPattern("HH:mm"))
                         Text(stringResource(R.string.shave_entry, time), style = MaterialTheme.typography.titleSmall)
                         Text(stringResource(if (event.cycleId == current?.id) R.string.current_cycle_label else R.string.historical_cycle_label), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        RatingDetails(event.ratings)
                     }
                     TextButton(onClick = { deleting = event.id }, enabled = !busy) { Text(stringResource(R.string.delete)) }
                 }

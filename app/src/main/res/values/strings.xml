@@ -72,4 +72,20 @@
     <string name="retired_history">已结束 · %1$d 次剃须</string>
     <string name="cycle_range">%1$s — %2$s</string>
     <string name="present">至今</string>
+    <string name="rating_title">剃须满意度</string>
+    <string name="rating_hint">剃须已记录。每项都可跳过，再点已选项可取消。</string>
+    <string name="rating_overall">总体评分</string>
+    <string name="rating_closeness">剃净度</string>
+    <string name="rating_smoothness">顺滑度</string>
+    <string name="rating_skin">皮肤状况</string>
+    <string name="rating_dissatisfied">不满意</string>
+    <string name="rating_neutral">一般</string>
+    <string name="rating_satisfied">满意</string>
+    <string name="rating_unrated">未评分</string>
+    <string name="rating_skip">跳过</string>
+    <string name="rating_skip_all">跳过评分</string>
+    <string name="rating_save">保存评分</string>
+    <string name="rating_error">评分保存未完成，可重试或跳过。剃须记录已保留。</string>
+    <string name="rating_detail">%1$s：%2$s</string>
+    <string name="day_rating_accessibility">%1$s，总体评分：%2$s</string>
 </resources>

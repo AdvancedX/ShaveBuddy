@@ -3,9 +3,13 @@ package com.shavebuddy.demo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import androidx.test.platform.app.InstrumentationRegistry
 import com.shavebuddy.demo.data.ShaveDatabase
 import com.shavebuddy.demo.data.ShaveRepository
 import com.shavebuddy.demo.domain.ShaveRules
+import com.shavebuddy.demo.domain.ShaveRatings
+import com.shavebuddy.demo.domain.Satisfaction
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -14,12 +18,53 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.json.JSONObject
 
 @RunWith(AndroidJUnit4::class)
 class RepositoryTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val clock = Clock.fixed(Instant.parse("2026-10-03T04:00:00Z"), ZoneId.of("Asia/Shanghai"))
     private val today = LocalDate.parse("2026-10-03")
+
+    @Test fun versionOneUpgradePreservesHistoryAndLeavesRatingsEmpty() = runBlocking {
+        val name = "migration-${System.nanoTime()}.db"
+        val schema = JSONObject(InstrumentationRegistry.getInstrumentation().context.assets
+            .open("com.shavebuddy.demo.data.ShaveDatabase/1.json").bufferedReader().use { it.readText() })
+            .getJSONObject("database")
+        context.getDatabasePath(name).parentFile!!.mkdirs()
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null).use { old ->
+            val entities = schema.getJSONArray("entities")
+            for (i in 0 until entities.length()) {
+                val entity = entities.getJSONObject(i)
+                val table = entity.getString("tableName")
+                old.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}", table))
+                val indices = entity.optJSONArray("indices")
+                if (indices != null) for (j in 0 until indices.length()) {
+                    old.execSQL(indices.getJSONObject(j).getString("createSql").replace("\${TABLE_NAME}", table))
+                }
+            }
+            val setup = schema.getJSONArray("setupQueries")
+            for (i in 0 until setup.length()) old.execSQL(setup.getString(i))
+            old.execSQL("INSERT INTO equipment VALUES (1, '旧剃须刀', 2)")
+            old.execSQL("INSERT INTO cycles VALUES ('old', '2026-10-01', NULL, 10, 30, 1, 1)")
+            old.execSQL("INSERT INTO events VALUES ('old-event', 'old', '2026-10-02', 123, 'Asia/Shanghai')")
+            old.version = 1
+        }
+        val db = ShaveDatabase.open(context, name)
+        try {
+            val snapshot = ShaveRepository(db, clock).read()
+            assertEquals("旧剃须刀", snapshot.equipment?.name)
+            assertEquals("old-event", snapshot.events.single().id)
+            assertEquals("old", snapshot.events.single().cycleId)
+            assertEquals(123L, snapshot.events.single().occurredAt)
+            assertEquals(1, ShaveRules.summarize(snapshot, today).uses)
+            assertEquals(2, db.openHelper.writableDatabase.version)
+            db.openHelper.writableDatabase.query("SELECT overallRating, closenessRating, smoothnessRating, skinRating FROM events").use {
+                assertTrue(it.moveToFirst())
+                for (column in 0..3) assertTrue(it.isNull(column))
+            }
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
 
     @Test fun historySurvivesReplacementDeletionAndDatabaseReopen() = runBlocking {
         val name = "repository-${System.nanoTime()}.db"
@@ -51,6 +96,36 @@ class RepositoryTest {
             db.close()
             context.deleteDatabase(name)
         }
+    }
+
+    @Test fun partialRatingsStayWithTheirEventAcrossReplacementAndReopen() = runBlocking {
+        val name = "ratings-${System.nanoTime()}.db"
+        var db = ShaveDatabase.open(context, name)
+        try {
+            var repository = ShaveRepository(db, clock)
+            repository.setup("剃须刀", today.minusDays(3), 10, 30, 2)
+            val first = repository.addEvent(today.minusDays(1))
+            val skipped = repository.addEvent(today.minusDays(1))
+            repository.rateEvent(first, ShaveRatings(overall = Satisfaction.NEUTRAL, closeness = Satisfaction.SATISFIED,
+                skin = Satisfaction.DISSATISFIED))
+            repository.replaceBlade()
+            db.close()
+            db = ShaveDatabase.open(context, name)
+            repository = ShaveRepository(db, clock)
+            val snapshot = repository.read()
+            val rated = snapshot.events.first { it.id == first }
+            assertEquals(Satisfaction.NEUTRAL, rated.ratings.overall)
+            assertEquals(Satisfaction.SATISFIED, rated.ratings.closeness)
+            assertNull(rated.ratings.smoothness)
+            assertEquals(Satisfaction.DISSATISFIED, rated.ratings.skin)
+            assertEquals(ShaveRatings(), snapshot.events.first { it.id == skipped }.ratings)
+            assertEquals(0, ShaveRules.summarize(snapshot, today).uses)
+            repository.deleteEvent(first)
+            assertEquals(skipped, repository.read().events.single().id)
+            try { repository.rateEvent(first, ShaveRatings(overall = Satisfaction.SATISFIED)); fail("rating nonexistent event accepted") }
+            catch (_: IllegalStateException) { }
+            assertEquals(ShaveRatings(), repository.read().events.single().ratings)
+        } finally { db.close(); context.deleteDatabase(name) }
     }
 
     @Test fun invalidWritesDoNotLeavePartialState() = runBlocking {
