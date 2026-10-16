@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,8 +26,11 @@ fun PageColumn(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-fun SectionTitle(title: String) {
-    Text(title, style = MaterialTheme.typography.headlineLarge)
+fun SectionTitle(title: String, onSettings: (() -> Unit)? = null) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, Modifier.weight(1f), style = MaterialTheme.typography.headlineLarge)
+        onSettings?.let { SettingsAction(it) }
+    }
 }
 
 @Composable
@@ -65,4 +70,11 @@ fun ChooseDate(initial: LocalDate, min: LocalDate?, max: LocalDate, onDismiss: (
         }) { Text(stringResource(R.string.confirm_date)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     ) { DatePicker(state = state) }
+}
+
+@Composable
+fun SettingsAction(onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+        Icon(Icons.Outlined.Settings, stringResource(R.string.settings))
+    }
 }

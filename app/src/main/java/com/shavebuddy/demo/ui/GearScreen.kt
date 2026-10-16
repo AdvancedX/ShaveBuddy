@@ -16,7 +16,7 @@ import com.shavebuddy.demo.domain.*
 import java.time.LocalDate
 
 @Composable
-fun GearScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onReplace: () -> Unit, onUpdate: (String, Int?, Int?, Int, () -> Unit) -> Unit) {
+fun GearScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onReplace: () -> Unit, onUpdate: (String, Int?, Int?, Int, () -> Unit) -> Unit, onSettings: () -> Unit = {}) {
     var replacing by rememberSaveable { mutableStateOf(false) }
     var editing by rememberSaveable { mutableStateOf(false) }
     val current = snapshot.cycles.firstOrNull { it.retiredOn == null }
@@ -24,13 +24,13 @@ fun GearScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onRepla
     BackHandler(enabled = editing) { editing = false }
     PageColumn {
         if (editing) {
-            SectionTitle(stringResource(R.string.edit_title))
+            SectionTitle(stringResource(R.string.edit_title), onSettings)
             SettingsForm(today, busy, equipment.name, current?.targetUses, current?.targetDays, equipment.intervalDays, editing = true) { name, _, uses, days, interval ->
                 onUpdate(name, uses, days, interval) { editing = false }
             }
             TextButton(onClick = { editing = false }, enabled = !busy) { Text(stringResource(R.string.cancel)) }
         } else {
-            SectionTitle(stringResource(R.string.gear_title))
+            SectionTitle(stringResource(R.string.gear_title), onSettings)
             Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

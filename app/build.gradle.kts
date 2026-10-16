@@ -10,8 +10,8 @@ android {
         applicationId = "com.shavebuddy.demo"
         minSdk = 26
         targetSdk = 37
-        versionCode = 3
-        versionName = "0.1.2-demo"
+        versionCode = 4
+        versionName = "0.1.3-demo"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -20,6 +20,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     testOptions { animationsDisabled = true }
+    sourceSets.getByName("androidTest").assets.directories.add("$projectDir/schemas")
 }
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }

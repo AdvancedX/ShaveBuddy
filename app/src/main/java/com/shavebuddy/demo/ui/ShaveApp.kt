@@ -5,6 +5,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shavebuddy.demo.update.UpdateViewModel
+import com.shavebuddy.demo.update.GitHubUpdateRepository
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -21,17 +28,26 @@ import kotlinx.coroutines.delay
 fun ShaveApp(model: ShaveViewModel) {
     val state by model.state.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    var settings by rememberSaveable { mutableStateOf(false) }
+    val pages = rememberSaveableStateHolder()
+    val appContext = LocalContext.current.applicationContext
+    val updates: UpdateViewModel = viewModel(factory = remember(appContext) {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = UpdateViewModel(GitHubUpdateRepository(appContext)) as T
+        }
+    })
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(lifecycle, model) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) { model.refreshDate(); delay(15_000) }
         }
     }
-    BackHandler(enabled = tab != 0) { tab = 0 }
+    BackHandler(enabled = settings || tab != 0) { if (settings) settings = false else tab = 0 }
     val snapshot = state.snapshot
     Scaffold(containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (snapshot?.equipment != null) NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+            if (snapshot?.equipment != null && !settings) NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 listOf(
                     Triple(1, R.string.calendar, R.drawable.ic_nav_calendar),
                     Triple(0, R.string.today, R.drawable.ic_nav_today),
@@ -62,10 +78,18 @@ fun ShaveApp(model: ShaveViewModel) {
                     }
                 }
                 snapshot.equipment == null -> SetupScreen(state.today, state.busy, model::setup)
-                tab == 0 -> TodayScreen(snapshot, state.today, state.busy, model::record, model::backfill)
-                tab == 1 -> CalendarScreen(snapshot, state.today, state.busy, model::record, model::delete)
-                else -> GearScreen(snapshot, state.today, state.busy, model::replace, model::updateSettings)
+                settings -> SettingsRoute(updates) { settings = false }
+                else -> pages.SaveableStateProvider(tab) {
+                    when (tab) {
+                        0 -> TodayScreen(snapshot, state.today, state.busy, model::record, model::backfill) { settings = true }
+                        1 -> CalendarScreen(snapshot, state.today, state.busy, model::record, model::delete) { settings = true }
+                        else -> GearScreen(snapshot, state.today, state.busy, model::replace, model::updateSettings) { settings = true }
+                    }
+                }
             }
         }
+    }
+    state.ratingEventId?.let { id ->
+        RatingDialog(id, state.busy, state.error, model::skipRatings, model::saveRatings)
     }
 }

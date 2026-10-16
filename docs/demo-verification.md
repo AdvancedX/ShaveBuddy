@@ -93,3 +93,73 @@ adb shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.Andr
 底部顺序改为“日历 / 今天 / 装备”，“今天”居中，默认页与系统返回行为保持一致。日期行和星期标题使用相同的 6dp 横向间距，日期行之间为 8dp 间距；日期格点击效果裁剪到各自圆角内。
 
 `./gradlew assembleDebug assembleDebugAndroidTest lintDebug` 成功，直接运行 `DemoFlowTest` 的 3 个 UI 流程全部通过。覆盖安装后检查实际截图：默认今天居中，左侧菜单进入日历，日期格之间已有清晰的横纵间隔，星期标题对齐，原有记录仍保留。
+
+
+## 2026-10-10 设置、应用内更新与日期标题
+
+在基于 `feat/manual-razor-demo` 的独立托管工作区完成，原 main 未提交改动保持原样。
+
+最终命令：
+
+```sh
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest connectedDebugAndroidTest
+git diff --check
+```
+
+34 个单元测试、18 个设备测试通过；构建成功，Lint 0 errors / 17 warnings。新测试覆盖数值版本与预发布筛选、无 APK 与非法来源、长度/摘要/大小上限、空文件和中断删除、包名/版本号/签名拒绝、显式联网和更新状态、取消后完成文件清理、设置导航和日历状态恢复、窄屏及两倍字体的星期完整性、真实 PackageManager 和 FileProvider。
+
+TDD 记录：版本与校验占位实现产生 17 个预期失败，状态机占位实现产生 5 个预期失败；日期测试在原排版捕获“星 / 期六”和孤立“六”。审查新增的排队调度器回归测试在旧代码中捕获“文件完成但结果尚未投递时取消”留下 APK 的问题，修复后通过。
+
+修正现有 UI 测试中已过期的“还没有记录”“调整装备与目标”文案选择器，改从对应资源读取；新日历测试通过 selectable 语义区分标题和底部标签。一次 Gradle 设备测试进程意外终止后，直接 instrumentation 的日期测试通过；最终完整 Gradle 套件再次成功。
+
+实际 APK：0.1.3-demo / versionCode 4，包名及签名与公开旧包一致。实际 GitHub 查询收到旧标签，明确显示暂无符合规则的包和重试；没有误报已是最新。浅色今天/设置与大字体深色今天截图保存在 `artifacts/0.1.3-demo/`，不入 Git；已恢复模拟器 font_scale=1.0、night=no。
+
+尚未完成：真机、API 26/厂商权限界面、新版本实际下载后的系统安装确认/取消、升级后本地记录保留。没有修改数据库 schema，没有发布 Release。
+
+详细安装包与发布约定见 `docs/releases/0.1.3-demo.md`。独立审查复查无剩余 Critical/Important 问题。
+
+## 2026-10-10 剃须满意度
+
+记录成功后展示四项独立可选评分：总体、剃净度、顺滑度、皮肤状况。三档按“不满意 / 一般 / 满意”排列；默认未评分，可重复点击取消、逐项跳过、全部跳过或返回关闭。剃须先保存，评分单独按事件 ID 更新，失败重试不重复记录。日历日期格显示当天最近一次已填写的总体评分，选择日期可查看每条记录的四项评分。
+
+Room 升级至 v2，Migration 仅新增四个可空评分列。设备测试用导出的 v1 schema 和实际旧数据建库，验证升级保留装备、周期、事件 ID、时间与使用次数，旧评分均为 NULL；另验证部分评分在更换刀片及数据库关闭重开后保持归属，删除后不存在的记录不能被评分。
+
+验证命令：
+
+```sh
+ANDROID_HOME=/Users/zheruixu/Library/Android/sdk ./gradlew testDebugUnitTest assembleDebug assembleDebugAndroidTest lintDebug
+adb -s emulator-5556 install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5556 install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb -s emulator-5556 shell am instrument -w -r -e class com.shavebuddy.demo.DemoFlowTest,com.shavebuddy.demo.RepositoryTest com.shavebuddy.demo.test/androidx.test.runner.AndroidJUnitRunner
+git diff --check
+```
+
+结果：8 个单元测试、12 个设备测试（5 个 UI / 7 个 Room）全部通过，构建成功，Lint 无错误，14 项 warning 为依赖更新、已有 launcher icon 和 SDK 检查提示。本次使用独立临时 API 37 模拟器与独立数据库，避免共享模拟器被另一组测试替换应用造成干扰。
+
+新增 UI 测试验证部分评分、默认未评分、逐项跳过、重复点击取消、返回关闭、同日最新评分、后续未评分不覆盖已有评分、补记后评分、真实 SQL 更新失败后重试不重复、失败后跳过不显示通用错误提示。两个旧 UI 断言改用当前字符串资源，修正之前残留的旧文案。
+
+评分面板测试先因缺少面板失败，迁移测试先因数据库版本仍为 1 失败；失败后跳过的回归先复现通用错误提示残留，修复后通过。独立代码审查和修正复查无剩余 Critical/Important 问题。
+
+已查看真实模拟器截图，评分面板四项与按钮均完整显示，日历格表情与详情评分正确。截图保存在构建产物 `app/build/verification/`，不入 Git。尚未验证真机、API 26、横屏大字体和评分草稿的进程恢复；进程退出后未保存评分不恢复，已保存剃须记录仍保留。
+
+## 2026-10-16 0.1.3-demo 整合发布验证
+
+在独立 `codex/release-0.1.3` 工作区合并设置/应用内更新与剃须满意度。三个冲突分别为字符串追加、UI 测试滚动和验证文档，保留两边功能及测试；原主目录未提交文件保持原样。
+
+使用 JDK 25、SDK Platform 37 和 Build Tools 36.0.0 执行：
+
+```sh
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --offline
+adb -s emulator-5556 install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5556 install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb -s emulator-5556 shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.AndroidJUnitRunner
+git diff --check HEAD
+```
+
+结果：34 项单元测试与 22 项 API 37 设备测试全部通过，构建成功；Lint 0 errors、6 warnings。独立整合审查无 Critical/Important 问题。
+
+另建临时 API 37 模拟器，安装从 GitHub 下载的实际 0.1.2-release APK，完成默认装备设置并记录一次剃须。保存旧数据库后，以最终 0.1.3 APK 执行 `adb install -r`，启动应用触发 Room v1→v2 迁移。界面保留 1 次旧记录；再记录一次并保存总体满意，设置页显示 0.1.3-demo。导出升级后的临时测试数据库，以 SQL EXCEPT 比对全部旧装备、周期和事件字段，丢失数量均为 0；旧事件四项评分均为 NULL，新事件总体评分为 3。评分面板截图已检查，保存于主目录 `artifacts/0.1.3-demo/upgrade-rating.png`。
+
+最终 APK SHA-256 为 `a8e45717a0d85a613c25706ca721da976b4d54806dc5f79ce4e81c3bd2332329`；新旧 APK 证书 SHA-256 均为 `d877770c3fa0d25a5ae03c0c9c669731d607b7810c10bb1309163d60d6f82cb0`。APK 与校验文件为构建产物，不入 Git。
+
+此次实际覆盖升级使用 ADB 安装，未实测应用内真实下载→系统授权→安装完整链路；Android 真机、API 26 和厂商权限界面仍待验证。
