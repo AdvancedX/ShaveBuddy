@@ -20,7 +20,11 @@ class ShaveRepository(private val database: ShaveDatabase, private val fixedCloc
         ShaveSnapshot(
             dao.equipment()?.let { Equipment(it.name, it.intervalDays) },
             dao.cycles().map { Cycle(it.id, LocalDate.parse(it.installedOn), it.retiredOn?.let(LocalDate::parse), it.targetUses, it.targetDays, it.createdAt) },
-            dao.events().map { ShaveEvent(it.id, it.cycleId, LocalDate.parse(it.localDate), it.occurredAt, it.timeZone) },
+            dao.events().map {
+                ShaveEvent(it.id, it.cycleId, LocalDate.parse(it.localDate), it.occurredAt, it.timeZone,
+                    ShaveRatings(Satisfaction.fromCode(it.overallRating), Satisfaction.fromCode(it.closenessRating),
+                        Satisfaction.fromCode(it.smoothnessRating), Satisfaction.fromCode(it.skinRating)))
+            },
         )
     }
 
@@ -42,7 +46,14 @@ class ShaveRepository(private val database: ShaveDatabase, private val fixedCloc
         }
         val cycle = requireNotNull(ShaveRules.cycleForDate(read().cycles, date))
         val instant = date.atTime(LocalTime.now(clock)).atZone(clock.zone).toInstant()
-        dao.insertEvent(EventEntity(UUID.randomUUID().toString(), cycle.id, date.toString(), instant.toEpochMilli(), clock.zone.id))
+        val id = UUID.randomUUID().toString()
+        dao.insertEvent(EventEntity(id, cycle.id, date.toString(), instant.toEpochMilli(), clock.zone.id))
+        id
+    }
+
+    suspend fun rateEvent(id: String, ratings: ShaveRatings) = database.withTransaction {
+        check(dao.updateRatings(id, ratings.overall?.code, ratings.closeness?.code,
+            ratings.smoothness?.code, ratings.skin?.code) == 1) { "Shave record no longer exists" }
     }
 
     suspend fun deleteEvent(id: String) = database.withTransaction { dao.deleteEvent(id) }

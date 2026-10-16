@@ -89,4 +89,7 @@ fun ShaveApp(model: ShaveViewModel) {
             }
         }
     }
+    state.ratingEventId?.let { id ->
+        RatingDialog(id, state.busy, state.error, model::skipRatings, model::saveRatings)
+    }
 }

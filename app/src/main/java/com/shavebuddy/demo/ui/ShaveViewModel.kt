@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shavebuddy.demo.data.ShaveRepository
 import com.shavebuddy.demo.domain.ShaveSnapshot
+import com.shavebuddy.demo.domain.ShaveRatings
 import java.time.LocalDate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ data class ShaveUiState(
     val today: LocalDate = LocalDate.now(),
     val busy: Boolean = false,
     val error: Boolean = false,
+    val ratingEventId: String? = null,
 )
 
 class ShaveViewModel(private val repository: ShaveRepository) : ViewModel() {
@@ -58,9 +60,25 @@ class ShaveViewModel(private val repository: ShaveRepository) : ViewModel() {
 
     fun setup(name: String, installedOn: LocalDate, uses: Int?, days: Int?, interval: Int) =
         mutate { repository.setup(name, installedOn, uses, days, interval) }
-    fun record(date: LocalDate) = mutate { repository.addEvent(date) }
+    fun record(date: LocalDate) = recordEvent(date, false)
     fun backfill(date: LocalDate, adjustFirstInstallation: Boolean) =
-        mutate { repository.addEvent(date, adjustFirstInstallation) }
+        recordEvent(date, adjustFirstInstallation)
+
+    private fun recordEvent(date: LocalDate, adjustFirstInstallation: Boolean) {
+        var id: String? = null
+        mutate(onSuccess = { mutableState.update { it.copy(ratingEventId = id) } }) {
+            id = repository.addEvent(date, adjustFirstInstallation)
+        }
+    }
+
+    fun skipRatings() {
+        if (!mutableState.value.busy) mutableState.update { it.copy(ratingEventId = null, error = false) }
+    }
+
+    fun saveRatings(ratings: ShaveRatings) {
+        val id = mutableState.value.ratingEventId ?: return
+        mutate(onSuccess = { mutableState.update { it.copy(ratingEventId = null) } }) { repository.rateEvent(id, ratings) }
+    }
     fun delete(id: String) = mutate { repository.deleteEvent(id) }
     fun replace() = mutate { repository.replaceBlade() }
     fun updateSettings(name: String, uses: Int?, days: Int?, interval: Int, onSuccess: () -> Unit) =
