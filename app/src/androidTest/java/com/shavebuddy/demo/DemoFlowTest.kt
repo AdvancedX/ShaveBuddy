@@ -66,9 +66,9 @@ class DemoFlowTest {
         compose.onNodeWithText("确认删除").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("删除").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithText("今天").performClick()
-        compose.onNodeWithText("还没有记录").assertExists()
+        compose.onNodeWithText(context.getString(R.string.no_record)).assertExists()
         compose.onNodeWithText("装备").performClick()
-        compose.onNodeWithText("调整装备与目标").performClick()
+        compose.onNodeWithText(context.getString(R.string.edit_settings)).performScrollTo().performClick()
         compose.onNodeWithText("装备名称").performTextReplacement("旅行剃须刀")
         compose.onNodeWithText("保存设置").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("更换刀片").fetchSemanticsNodes().isNotEmpty() }

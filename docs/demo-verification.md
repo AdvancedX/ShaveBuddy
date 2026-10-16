@@ -93,3 +93,27 @@ adb shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.Andr
 底部顺序改为“日历 / 今天 / 装备”，“今天”居中，默认页与系统返回行为保持一致。日期行和星期标题使用相同的 6dp 横向间距，日期行之间为 8dp 间距；日期格点击效果裁剪到各自圆角内。
 
 `./gradlew assembleDebug assembleDebugAndroidTest lintDebug` 成功，直接运行 `DemoFlowTest` 的 3 个 UI 流程全部通过。覆盖安装后检查实际截图：默认今天居中，左侧菜单进入日历，日期格之间已有清晰的横纵间隔，星期标题对齐，原有记录仍保留。
+
+
+## 2026-10-10 设置、应用内更新与日期标题
+
+在基于 `feat/manual-razor-demo` 的独立托管工作区完成，原 main 未提交改动保持原样。
+
+最终命令：
+
+```sh
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest connectedDebugAndroidTest
+git diff --check
+```
+
+34 个单元测试、18 个设备测试通过；构建成功，Lint 0 errors / 17 warnings。新测试覆盖数值版本与预发布筛选、无 APK 与非法来源、长度/摘要/大小上限、空文件和中断删除、包名/版本号/签名拒绝、显式联网和更新状态、取消后完成文件清理、设置导航和日历状态恢复、窄屏及两倍字体的星期完整性、真实 PackageManager 和 FileProvider。
+
+TDD 记录：版本与校验占位实现产生 17 个预期失败，状态机占位实现产生 5 个预期失败；日期测试在原排版捕获“星 / 期六”和孤立“六”。审查新增的排队调度器回归测试在旧代码中捕获“文件完成但结果尚未投递时取消”留下 APK 的问题，修复后通过。
+
+修正现有 UI 测试中已过期的“还没有记录”“调整装备与目标”文案选择器，改从对应资源读取；新日历测试通过 selectable 语义区分标题和底部标签。一次 Gradle 设备测试进程意外终止后，直接 instrumentation 的日期测试通过；最终完整 Gradle 套件再次成功。
+
+实际 APK：0.1.3-demo / versionCode 4，包名及签名与公开旧包一致。实际 GitHub 查询收到旧标签，明确显示暂无符合规则的包和重试；没有误报已是最新。浅色今天/设置与大字体深色今天截图保存在 `artifacts/0.1.3-demo/`，不入 Git；已恢复模拟器 font_scale=1.0、night=no。
+
+尚未完成：真机、API 26/厂商权限界面、新版本实际下载后的系统安装确认/取消、升级后本地记录保留。没有修改数据库 schema，没有发布 Release。
+
+详细安装包与发布约定见 `docs/releases/0.1.3-demo.md`。独立审查复查无剩余 Critical/Important 问题。

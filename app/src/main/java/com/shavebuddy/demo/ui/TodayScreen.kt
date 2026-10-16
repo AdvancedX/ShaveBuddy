@@ -15,13 +15,13 @@ import com.shavebuddy.demo.domain.*
 import java.time.LocalDate
 
 @Composable
-fun TodayScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onRecord: (LocalDate) -> Unit, onBackfill: (LocalDate, Boolean) -> Unit) {
+fun TodayScreen(snapshot: ShaveSnapshot, today: LocalDate, busy: Boolean, onRecord: (LocalDate) -> Unit, onBackfill: (LocalDate, Boolean) -> Unit, onSettings: () -> Unit = {}) {
     val summary = ShaveRules.summarize(snapshot, today)
     var backfill by remember { mutableStateOf(false) }
     var pendingBackfill by rememberSaveable { mutableStateOf<String?>(null) }
     val firstInstallation = snapshot.cycles.minOfOrNull { it.installedOn }
     PageColumn {
-        IllustratedHeader(formatDate(today))
+        IllustratedDateHeader(today, onSettings)
         Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
             Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Text(stringResource(R.string.current_blade), style = MaterialTheme.typography.labelLarge)
