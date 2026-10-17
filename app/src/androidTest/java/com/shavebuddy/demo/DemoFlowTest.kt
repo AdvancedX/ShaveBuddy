@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -56,22 +58,28 @@ class DemoFlowTest {
         finally { bitmap.recycle() }
     }
 
+    private fun rate(title: String, value: Float) {
+        compose.onNodeWithContentDescription(title).performScrollTo()
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(value) }
+    }
+
     @Test fun optionalRatingsAppearAfterRecordingAndInCalendar() {
         compose.waitUntil(10_000) { compose.onAllNodesWithText("开始记录").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("开始记录").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("记录剃须").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("记录剃须").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("今天已记录 1 次").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("剃须满意度").assertExists()
-        compose.onNodeWithContentDescription("总体评分，满意").performScrollTo().performClick().assertIsSelected()
-        compose.onNodeWithContentDescription("剃净度，一般").performScrollTo().performClick()
-        compose.onNodeWithContentDescription("顺滑度，不满意").performScrollTo().performClick()
-        compose.onNodeWithContentDescription("顺滑度，跳过").performClick()
-        compose.onNodeWithContentDescription("顺滑度，不满意").assertIsNotSelected().performClick()
-        compose.onNodeWithContentDescription("皮肤状况，满意").performScrollTo().performClick().performClick().assertIsNotSelected()
+        compose.onNodeWithText("这次剃得怎么样？").assertExists()
+        rate("整体感受", 3f)
+        rate("剃净度", 2f)
+        rate("顺滑度", 1f)
+        compose.onNodeWithContentDescription("清空顺滑度").performClick()
+        rate("顺滑度", 1f)
+        rate("皮肤状况", 3f)
+        compose.onNodeWithContentDescription("清空皮肤状况").performClick()
         screenshot("rating-panel.png")
-        compose.onNodeWithText("保存评分").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithText("保存感受").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithText("日历").performClick()
         compose.onNodeWithText("总体评分：满意").assertExists()
         compose.onNodeWithText("剃净度：一般").assertExists()
@@ -81,14 +89,14 @@ class DemoFlowTest {
         screenshot("rating-calendar.png")
         // A later skipped rating must not erase the day's last rated shave.
         compose.onNodeWithText("记录这一天").performScrollTo().performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("跳过评分").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("暂时跳过").performClick()
         compose.onNodeWithContentDescription("${com.shavebuddy.demo.ui.formatDate(LocalDate.now())}，2 条剃须记录，总体评分：满意").assertExists()
         compose.onNodeWithText("记录这一天").performScrollTo().performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithContentDescription("总体评分，不满意").performScrollTo().performClick()
-        compose.onNodeWithText("保存评分").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isEmpty() }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isNotEmpty() }
+        rate("整体感受", 1f)
+        compose.onNodeWithText("保存感受").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithContentDescription("${com.shavebuddy.demo.ui.formatDate(LocalDate.now())}，3 条剃须记录，总体评分：不满意").assertExists()
         runBlocking {
             val events = repository.read().events.sortedBy { it.occurredAt }
@@ -104,27 +112,27 @@ class DemoFlowTest {
         compose.onNodeWithText("开始记录").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("记录剃须").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("记录剃须").performScrollTo().performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isNotEmpty() }
         androidx.test.espresso.Espresso.pressBack()
         runBlocking { assertEquals(1, repository.read().events.size); assertNull(repository.read().events.single().ratings.overall) }
         compose.onNodeWithText("记录剃须").performScrollTo().performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithContentDescription("总体评分，满意").performScrollTo().performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isNotEmpty() }
+        rate("整体感受", 3f)
         database.openHelper.writableDatabase.execSQL("CREATE TRIGGER reject_rating BEFORE UPDATE ON events BEGIN SELECT RAISE(ABORT, 'test rating failure'); END")
-        compose.onNodeWithText("保存评分").performClick()
+        compose.onNodeWithText("保存感受").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("评分保存未完成，可重试或跳过。剃须记录已保留。").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithContentDescription("总体评分，满意").assertIsSelected()
+        compose.onNodeWithContentDescription("整体感受").assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "很满意"))
         runBlocking { assertEquals(2, repository.read().events.size); assertTrue(repository.read().events.all { it.ratings.overall == null }) }
         database.openHelper.writableDatabase.execSQL("DROP TRIGGER reject_rating")
-        compose.onNodeWithText("保存评分").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithText("保存感受").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isEmpty() }
         runBlocking { assertEquals(2, repository.read().events.size); assertEquals(1, repository.read().events.count { it.ratings.overall != null }) }
         compose.onNodeWithText("记录剃须").performScrollTo().performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isNotEmpty() }
         database.openHelper.writableDatabase.execSQL("CREATE TRIGGER reject_rating BEFORE UPDATE ON events BEGIN SELECT RAISE(ABORT, 'test rating failure'); END")
-        compose.onNodeWithText("保存评分").performClick()
+        compose.onNodeWithText("保存感受").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("评分保存未完成，可重试或跳过。剃须记录已保留。").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("跳过评分").performClick()
+        compose.onNodeWithText("暂时跳过").performClick()
         compose.onNodeWithText("操作可能未完成。重新读取记录，确认后再试。").assertDoesNotExist()
         runBlocking { assertEquals(3, repository.read().events.size) }
     }
@@ -135,7 +143,7 @@ class DemoFlowTest {
         compose.waitUntil(10_000) { compose.onAllNodesWithText("记录剃须").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("记录剃须").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("今天已记录 1 次").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("跳过评分").performClick()
+        compose.onNodeWithText("暂时跳过").performClick()
         compose.onNodeWithText("日历").performClick()
         compose.onNodeWithText("删除").assertExists()
         compose.onNodeWithText("装备").performClick()
@@ -172,7 +180,7 @@ class DemoFlowTest {
         compose.onNodeWithText("0 次").assertExists()
         compose.onNodeWithText("记录剃须").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("今天已记录 1 次").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("跳过评分").performClick()
+        compose.onNodeWithText("暂时跳过").performClick()
     }
 
     @Test fun backfillBeforeDefaultInstallationCanSelectDateAndRequiresConfirmation() {
@@ -200,10 +208,10 @@ class DemoFlowTest {
         selectPastDate()
         compose.onNodeWithText("调整并补记").performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("1 次").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("剃须满意度").assertExists()
-        compose.onNodeWithContentDescription("剃净度，满意").performScrollTo().performClick()
-        compose.onNodeWithText("保存评分").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("剃须满意度").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithText("这次剃得怎么样？").assertExists()
+        rate("剃净度", 3f)
+        compose.onNodeWithText("保存感受").performClick()
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("这次剃得怎么样？").fetchSemanticsNodes().isEmpty() }
         runBlocking {
             val data = repository.read()
             assertEquals(date, data.events.single().localDate)

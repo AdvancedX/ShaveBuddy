@@ -163,3 +163,27 @@ git diff --check HEAD
 最终 APK SHA-256 为 `a8e45717a0d85a613c25706ca721da976b4d54806dc5f79ce4e81c3bd2332329`；新旧 APK 证书 SHA-256 均为 `d877770c3fa0d25a5ae03c0c9c669731d607b7810c10bb1309163d60d6f82cb0`。APK 与校验文件为构建产物，不入 Git。
 
 此次实际覆盖升级使用 ADB 安装，未实测应用内真实下载→系统授权→安装完整链路；Android 真机、API 26 和厂商权限界面仍待验证。
+
+## 2026-10-17 0.1.4-demo 满意度滑杆与发布验证
+
+满意度面板改为四条滑杆：整体感受使用较粗轨道和较大圆点，三个子项使用更细轨道和较小圆点。加入引导、两端含义和当前评价标签。未填写是独立空值，不占据最低评分位置；点击清空才恢复空值，首次点选中间档也会保存为一般。数据库仍为 v2，评分继续使用既有的可空 1–3 编码。
+
+先运行回归测试，旧实现拖回最左端时错误保存 NULL，期望的最低评分断言失败；分离空值和最低档后通过。新增及更新的测试同时覆盖全空保存、部分评分、触摸拖动、清空、首次点选中间档、状态恢复、忙碌禁用与全部跳过。
+
+在最新主分支 bbbcb6e 基础上准备 0.1.4-demo / versionCode 5，执行：
+
+```sh
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest --offline
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -r com.shavebuddy.demo.test/androidx.test.runner.AndroidJUnitRunner
+git diff --check
+```
+
+结果：34 项单元测试、29 项 API 37 设备测试通过，构建成功；Lint 为 0 errors、6 项既有 warnings。设备测试使用独立数据库，采用覆盖安装和直接 instrumentation，未执行会卸载应用的 connectedDebugAndroidTest。
+
+另外验证浅色、深色和 320dp / 1.5 倍字体的评分流程，截图已检查，模拟器显示设置已恢复。独立代码审查与发布审查未发现阻塞问题。
+
+实际安装包的 versionName 为 0.1.4-demo、versionCode 为 5；SHA-256 为 `7a2c157922cbb7bd8f6be6cf9f43fe919e4973c65ed8605235819b990ac3f185`。通过 apksigner 核对，新包和已发布 0.1.3 APK 的证书 SHA-256 均为 `d877770c3fa0d25a5ae03c0c9c669731d607b7810c10bb1309163d60d6f82cb0`。APK 与 SHA256SUMS 保存在主目录 artifacts/0.1.4-demo，不入 Git。
+
+本次仍未验证 Android 真机、API 26、厂商安装权限界面及真实应用内下载至安装确认的完整链路。

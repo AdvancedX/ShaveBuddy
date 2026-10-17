@@ -6,9 +6,9 @@
 
 ## 下载与安装
 
-**[下载 Android APK：ShaveBuddy.apk](https://github.com/AdvancedX/ShaveBuddy/releases/download/v0.1.3-demo/ShaveBuddy.apk)**
+**[下载 Android APK：ShaveBuddy.apk](https://github.com/AdvancedX/ShaveBuddy/releases/download/v0.1.4-demo/ShaveBuddy.apk)**
 
-支持 **Android 8.0 及以上**，界面语言为简体中文。当前版本为 **0.1.3-demo（预发布）**，版本信息见 [发布页面](https://github.com/AdvancedX/ShaveBuddy/releases/tag/v0.1.3-demo)。
+支持 **Android 8.0 及以上**，界面语言为简体中文。当前版本为 **0.1.4-demo（试用版）**，版本信息见 [发布页面](https://github.com/AdvancedX/ShaveBuddy/releases/tag/v0.1.4-demo)。
 
 用手机下载 APK 后打开安装。如果系统提示，请允许当前浏览器或文件管理器安装此应用。安装完成后，打开 ShaveBuddy 即可开始使用。
 
@@ -17,7 +17,7 @@
 ## 主要功能
 
 - **一键记录**：记录今天的剃须，同一天可以记录多次。
-- **剃须满意度**：记录后可为总体、剃净度、顺滑度和皮肤状况分别选择「不满意 / 一般 / 满意」，每项都可跳过。
+- **剃须满意度**：记录后可拖动滑杆，分别填写整体感受、剃净度、顺滑度和皮肤状况。两端说明和当前评价帮助理解，每项默认留空，也可单独清空或全部跳过。
 - **补记与回顾**：补记过去的日期，按月查看剃须日历，查看或删除某一天的记录。
 - **刀片统计**：查看当前刀片的使用次数和已安装天数。
 - **个人目标**：设置刀片使用次数、天数目标，达到任一目标时显示更换提示；也可以留空关闭目标。
@@ -47,14 +47,14 @@ ShaveBuddy 不需要账号，不上传剃须记录，也不接入行为分析服
 
 ## 开发与构建
 
-应用采用 Kotlin、Jetpack Compose、Material 3 和 Room。当前发布包的完整源码位于 `v0.1.3-demo` 标签。
+应用采用 Kotlin、Jetpack Compose、Material 3 和 Room。当前发布包的完整源码位于 `v0.1.4-demo` 标签。
 
 ```sh
-git clone --branch v0.1.3-demo https://github.com/AdvancedX/ShaveBuddy.git
+git clone --branch v0.1.4-demo https://github.com/AdvancedX/ShaveBuddy.git
 cd ShaveBuddy
 ```
 
-[v0.1.3-demo 标签](https://github.com/AdvancedX/ShaveBuddy/tree/v0.1.3-demo)对应下载包的源码；已有仓库可执行 `git fetch --tags` 后运行 `git checkout v0.1.3-demo`。
+[v0.1.4-demo 标签](https://github.com/AdvancedX/ShaveBuddy/tree/v0.1.4-demo)对应下载包的源码；已有仓库可执行 `git fetch --tags` 后运行 `git checkout v0.1.4-demo`。
 
 用 Android Studio 打开仓库根目录，等待 Gradle 同步，选择 `app` 与 Android 手机或模拟器后运行。
 
