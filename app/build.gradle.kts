@@ -10,8 +10,8 @@ android {
         applicationId = "com.shavebuddy.demo"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
-        versionName = "0.1.3-demo"
+        versionCode = 5
+        versionName = "0.1.4-demo"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
